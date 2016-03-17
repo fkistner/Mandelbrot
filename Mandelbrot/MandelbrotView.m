@@ -72,7 +72,7 @@ const CGBitmapInfo kBitmapInfo = kCGBitmapByteOrderDefault | kCGImageAlphaNone;
         
             for (int p = 0, i = 0; i <= UINT8_MAX; i++)
             {
-                CGFloat c = (double)i/UINT8_MAX;
+                CGFloat c = 1. - (double)i/UINT8_MAX;
                 UIColor* color = [UIColor colorWithHue:fmod(c+hue, .95) saturation:.75 brightness:MIN(c*10, .75) alpha:1.];
                 CGFloat comp[3];
                 [color getRed:&(comp[0]) green:&(comp[1]) blue:&(comp[2]) alpha:NULL];
@@ -171,15 +171,15 @@ bool IsDefinitelyInMandelbrotSet(double complex z)
             CGPoint userPoint = CGPointApplyAffineTransform(CGPointMake(x, y), transform);
             double complex z_0 = CMPLX(userPoint.x, userPoint.y);
             
-            const int kItMax = UINT8_MAX;
-            uint8_t it = kItMax;
+            const int kItStart = UINT8_MAX;
+            uint8_t it = 0;
             
             // Only do escape analysis, when not definitely in set
             if (!IsDefinitelyInMandelbrotSet(z_0))
             {
                 // escape time algorithm
                 double complex z = CMPLX(0, 0);
-                for (it = 0; it < kItMax; it++)
+                for (it = kItStart; it > 0; it--)
                 {
                     z = csquare(z) + z_0;
                     
@@ -188,7 +188,7 @@ bool IsDefinitelyInMandelbrotSet(double complex z)
                     {
                         // Smoothing
                         double nu = log2(log2(zAbsSquared) / 2);
-                        it = round(it + 1 - nu);
+                        it = round(it - 1 + nu);
                         break;
                     }
                 }
