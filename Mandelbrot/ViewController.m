@@ -50,6 +50,19 @@
     [self.scrollView zoomToRect:rect animated:YES];
 }
 
+- (IBAction)toggleHue:(UIBarButtonItem *)sender {
+    if (isnan(self.mandelbrotView.hue))
+    {
+        sender.title = @"Hue";
+        self.hueSlider.enabled = YES;
+        self.mandelbrotView.hue = self.hueSlider.value;
+    } else {
+        sender.title = @"Gray";
+        self.hueSlider.enabled = NO;
+        self.mandelbrotView.hue = NAN;
+    }
+}
+
 - (IBAction)hueChanged:(UISlider *)sender {
     self.mandelbrotView.hue = sender.value;
 }

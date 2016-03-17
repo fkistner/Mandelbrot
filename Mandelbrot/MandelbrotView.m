@@ -64,19 +64,26 @@ const CGBitmapInfo kBitmapInfo = kCGBitmapByteOrderDefault | kCGImageAlphaNone;
     
     // do not block main queue with palette initialization
     dispatch_block_t initPalette = dispatch_block_create(DISPATCH_BLOCK_INHERIT_QOS_CLASS, ^{
-        for (int p = 0, i = 0; i <= UINT8_MAX; i++)
-        {
-            CGFloat c = (double)i/UINT8_MAX;
-            UIColor* color = [UIColor colorWithHue:fmod(c+hue, .95) saturation:.75 brightness:MIN(c*10, .75) alpha:1.];
-            CGFloat comp[3];
-            [color getRed:&(comp[0]) green:&(comp[1]) blue:&(comp[2]) alpha:NULL];
-            
-            colorPalette[p++] = comp[0] * UINT8_MAX;
-            colorPalette[p++] = comp[1] * UINT8_MAX;
-            colorPalette[p++] = comp[2] * UINT8_MAX;
-        }
         
-        CGColorSpaceRef newColorSpace = CGColorSpaceCreateIndexed(CGColorSpaceCreateDeviceRGB(), UINT8_MAX, colorPalette);
+        CGColorSpaceRef newColorSpace;
+        if (isnan(hue)) {
+            newColorSpace = CGColorSpaceCreateDeviceGray();
+        } else {
+        
+            for (int p = 0, i = 0; i <= UINT8_MAX; i++)
+            {
+                CGFloat c = (double)i/UINT8_MAX;
+                UIColor* color = [UIColor colorWithHue:fmod(c+hue, .95) saturation:.75 brightness:MIN(c*10, .75) alpha:1.];
+                CGFloat comp[3];
+                [color getRed:&(comp[0]) green:&(comp[1]) blue:&(comp[2]) alpha:NULL];
+                
+                colorPalette[p++] = comp[0] * UINT8_MAX;
+                colorPalette[p++] = comp[1] * UINT8_MAX;
+                colorPalette[p++] = comp[2] * UINT8_MAX;
+            }
+            
+            newColorSpace = CGColorSpaceCreateIndexed(CGColorSpaceCreateDeviceRGB(), UINT8_MAX, colorPalette);
+        }
         
         OSSpinLockLock(&colorLock);
         if (colorSpace != nil) CGColorSpaceRelease(colorSpace);
