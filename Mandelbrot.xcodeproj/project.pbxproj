@@ -14,6 +14,7 @@
 		17FEE6E11C98A56A00EA62A8 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 17FEE6E01C98A56A00EA62A8 /* Assets.xcassets */; };
 		17FEE6E41C98A56A00EA62A8 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 17FEE6E21C98A56A00EA62A8 /* LaunchScreen.storyboard */; };
 		17FEE6EF1C98A56A00EA62A8 /* MandelbrotTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 17FEE6EE1C98A56A00EA62A8 /* MandelbrotTests.m */; };
+		17FEE6FB1C98B55500EA62A8 /* MandelbrotView.m in Sources */ = {isa = PBXBuildFile; fileRef = 17FEE6FA1C98B55500EA62A8 /* MandelbrotView.m */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -40,6 +41,8 @@
 		17FEE6EA1C98A56A00EA62A8 /* MandelbrotTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = MandelbrotTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		17FEE6EE1C98A56A00EA62A8 /* MandelbrotTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = MandelbrotTests.m; sourceTree = "<group>"; };
 		17FEE6F01C98A56A00EA62A8 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		17FEE6F91C98B55500EA62A8 /* MandelbrotView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MandelbrotView.h; sourceTree = "<group>"; };
+		17FEE6FA1C98B55500EA62A8 /* MandelbrotView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MandelbrotView.m; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -90,6 +93,8 @@
 				17FEE6E21C98A56A00EA62A8 /* LaunchScreen.storyboard */,
 				17FEE6E51C98A56A00EA62A8 /* Info.plist */,
 				17FEE6D41C98A56900EA62A8 /* Supporting Files */,
+				17FEE6F91C98B55500EA62A8 /* MandelbrotView.h */,
+				17FEE6FA1C98B55500EA62A8 /* MandelbrotView.m */,
 			);
 			path = Mandelbrot;
 			sourceTree = "<group>";
@@ -214,6 +219,7 @@
 				17FEE6DC1C98A56A00EA62A8 /* ViewController.m in Sources */,
 				17FEE6D91C98A56A00EA62A8 /* AppDelegate.m in Sources */,
 				17FEE6D61C98A56900EA62A8 /* main.m in Sources */,
+				17FEE6FB1C98B55500EA62A8 /* MandelbrotView.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
