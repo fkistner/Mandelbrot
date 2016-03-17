@@ -7,8 +7,7 @@
 //
 
 #import "MandelbrotView.h"
-
-#include <complex.h>
+#import <complex.h>
 
 @import CoreGraphics;
 
@@ -23,6 +22,9 @@
 }
 
 const int kTileSize = 256;
+const int kBitsPerComp = sizeof(uint8_t) * 8;
+const int kCompPerPixel = 1;
+const CGBitmapInfo kBitmapInfo = kCGBitmapByteOrderDefault | kCGImageAlphaNone;
 
 - (instancetype)initWithCoder:(NSCoder *)aDecoder
 {
@@ -43,7 +45,6 @@ const int kTileSize = 256;
         colorSpace = CGColorSpaceCreateIndexed(CGColorSpaceCreateDeviceRGB(), UINT8_MAX, colorPalette);
 
         CATiledLayer* layer = (CATiledLayer*)self.layer;
-        //layer.levelsOfDetail     = 1 << 18;
         layer.levelsOfDetailBias = 19;//log2(CGFLOAT_MAX);// 18; //1 << 10;//layer.levelsOfDetail - 1;
         layer.tileSize = CGSizeMake(kTileSize, kTileSize);
     }
@@ -66,57 +67,61 @@ const int kTileSize = 256;
     [self drawMandelbrot:context forRect:rect];
 }
 
+double square(double n)
+{
+    return n*n;
+}
+
 bool IsDefinitelyInMandelbrotSet(double complex z)
 {
     double xMinusQuarter = creal(z) - .25;
-    double ySquared = cimag(z)*cimag(z);
-    double q = xMinusQuarter*xMinusQuarter + ySquared;
+    double ySquared = square(cimag(z));
+    double q = square(xMinusQuarter) + ySquared;
     double xPlusOne = creal(z) + 1;
     
-    return (q*(q+xMinusQuarter) < .25*ySquared)    // Cardioid
-        || (xPlusOne*xPlusOne + ySquared < .0625); // Period-1 bulb
+    return (q * (q + xMinusQuarter) < .25 * ySquared) // Cardioid
+        || (square(xPlusOne) + ySquared < .0625);     // Period-1 bulb
+}
+
+CGAffineTransform AffineTransformToCoordRectFromCTM(CGRect coordRect, CGAffineTransform ctmTransform, CGSize viewSize)
+{
+    CGAffineTransform userTransform = CGAffineTransformInvert(ctmTransform);
+    CGAffineTransform viewTransform = CGAffineTransformScale(CGAffineTransformMakeTranslation(coordRect.origin.x, coordRect.origin.y), coordRect.size.width / viewSize.width, coordRect.size.height / viewSize.height);
+    return CGAffineTransformConcat(userTransform, viewTransform);
 }
 
 - (void)drawMandelbrot:(CGContextRef)context forRect:(CGRect)rect
 {
-    const int kBitsPerComp = sizeof(uint8_t) * 8;
-    const int kCompPerPixel = 1;
-    const CGBitmapInfo kBitmapInfo = kCGBitmapByteOrderDefault | kCGImageAlphaNone;
-    
+    CGRect coordRect = CGRectMake(-2.25, -1., 3., 2.);
     CGRect targetRect = CGContextConvertRectToDeviceSpace(context, rect);
-    double scaleReal = 3. / self.bounds.size.width;
-    double scaleImag = 2. / self.bounds.size.height;
+    CGAffineTransform transform = AffineTransformToCoordRectFromCTM(coordRect, CGContextGetCTM(context), self.bounds.size);
     
     int bitmapSize = kCompPerPixel * targetRect.size.width * targetRect.size.height;
     int bytesPerRow = kBitsPerComp * kCompPerPixel * targetRect.size.width / 8;
     
-    CGAffineTransform userTransform = CGAffineTransformInvert(CGContextGetCTM(context));
-    CGAffineTransform viewTransform = CGAffineTransformScale(CGAffineTransformMakeTranslation(-2.25, -1.), scaleReal, scaleImag);
-    CGAffineTransform transform = CGAffineTransformConcat(userTransform, viewTransform);
-    
-    uint8_t data[bitmapSize]; // maximum length kTileSize^2 -> fine for stack
+    uint8_t data[bitmapSize]; // maximum length should be fine for stack
     
     for (int p = 0, y = 0; y < targetRect.size.height; y++)
     {
         for (int x = 0; x < targetRect.size.width; x++)
         {
             CGPoint userPoint = CGPointApplyAffineTransform(CGPointMake(x, y), transform);
-            double complex z = CMPLX(userPoint.x, userPoint.y);
+            double complex z_0 = CMPLX(userPoint.x, userPoint.y);
             
             const int kItMax = UINT8_MAX;
             uint8_t it = UINT8_MAX;
             
             // Only do escape analysis, when not definitely in set
-            if (!IsDefinitelyInMandelbrotSet(z))
+            if (!IsDefinitelyInMandelbrotSet(z_0))
             {
                 // escape time algorithm
-                double complex n = CMPLX(0, 0);
+                double complex z = CMPLX(0, 0);
                 for (it = 0; it < kItMax; it++)
                 {
-                    n = n*n + z;
-                    double nAbsSquared = creal(n)*creal(n) + cimag(n)*cimag(n);
+                    z = z*z + z_0;
                     
-                    if (nAbsSquared > 4)
+                    double zAbsSquared = square(creal(z)) + square(cimag(z));
+                    if (zAbsSquared > 4)
                     {
                         // Smoothing?
                         /*double nu = log2(log2(nAbsSquared) / 2);
