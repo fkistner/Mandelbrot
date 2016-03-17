@@ -1,13 +1,14 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="6211" systemVersion="14A298i" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" initialViewController="BYZ-38-t0r">
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="9532" systemVersion="15D21" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" initialViewController="sf3-4k-KdA">
     <dependencies>
-        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="6204"/>
+        <deployment identifier="iOS"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="9530"/>
     </dependencies>
     <scenes>
-        <!--View Controller-->
+        <!--Mandelbrot-->
         <scene sceneID="tne-QT-ifu">
             <objects>
-                <viewController id="BYZ-38-t0r" customClass="ViewController" customModuleProvider="" sceneMemberID="viewController">
+                <viewController automaticallyAdjustsScrollViewInsets="NO" id="BYZ-38-t0r" customClass="ViewController" sceneMemberID="viewController">
                     <layoutGuides>
                         <viewControllerLayoutGuide type="top" id="y3c-jy-aDJ"/>
                         <viewControllerLayoutGuide type="bottom" id="wfy-db-euE"/>
@@ -15,11 +16,79 @@
                     <view key="view" contentMode="scaleToFill" id="8bC-Xf-vdC">
                         <rect key="frame" x="0.0" y="0.0" width="600" height="600"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                        <subviews>
+                            <scrollView clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="goK-Bd-enh">
+                                <rect key="frame" x="0.0" y="64" width="600" height="536"/>
+                                <subviews>
+                                    <view clearsContextBeforeDrawing="NO" contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="DLO-VJ-Oar" customClass="MandelbrotView">
+                                        <rect key="frame" x="0.0" y="0.0" width="600" height="536"/>
+                                        <color key="backgroundColor" white="0.0" alpha="0.0" colorSpace="calibratedWhite"/>
+                                        <gestureRecognizers/>
+                                    </view>
+                                </subviews>
+                                <color key="backgroundColor" white="0.0" alpha="1" colorSpace="calibratedWhite"/>
+                                <gestureRecognizers/>
+                                <constraints>
+                                    <constraint firstItem="DLO-VJ-Oar" firstAttribute="top" secondItem="goK-Bd-enh" secondAttribute="top" id="1E9-5y-ycb"/>
+                                    <constraint firstAttribute="bottom" secondItem="DLO-VJ-Oar" secondAttribute="bottom" id="3cx-sJ-bhw"/>
+                                    <constraint firstAttribute="trailing" secondItem="DLO-VJ-Oar" secondAttribute="trailing" id="5q1-In-aTv"/>
+                                    <constraint firstItem="DLO-VJ-Oar" firstAttribute="height" secondItem="goK-Bd-enh" secondAttribute="height" id="Ovl-qT-olr"/>
+                                    <constraint firstItem="DLO-VJ-Oar" firstAttribute="width" secondItem="goK-Bd-enh" secondAttribute="width" id="lEy-Bb-524"/>
+                                    <constraint firstItem="DLO-VJ-Oar" firstAttribute="leading" secondItem="goK-Bd-enh" secondAttribute="leading" id="vbU-mX-Wbf"/>
+                                </constraints>
+                                <connections>
+                                    <outlet property="delegate" destination="BYZ-38-t0r" id="ONK-rs-vkr"/>
+                                    <outletCollection property="gestureRecognizers" destination="07H-Qk-iHQ" appends="YES" id="L8N-Ju-4eG"/>
+                                    <outletCollection property="gestureRecognizers" destination="nCG-hq-49q" appends="YES" id="2Ez-9n-QkI"/>
+                                </connections>
+                            </scrollView>
+                        </subviews>
                         <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="calibratedWhite"/>
+                        <gestureRecognizers/>
+                        <constraints>
+                            <constraint firstItem="wfy-db-euE" firstAttribute="top" secondItem="goK-Bd-enh" secondAttribute="bottom" id="BVP-S5-3Vd"/>
+                            <constraint firstAttribute="trailing" secondItem="goK-Bd-enh" secondAttribute="trailing" id="Cid-Lw-SCa"/>
+                            <constraint firstItem="goK-Bd-enh" firstAttribute="top" secondItem="y3c-jy-aDJ" secondAttribute="bottom" id="Lct-0g-M6o"/>
+                            <constraint firstItem="goK-Bd-enh" firstAttribute="leading" secondItem="8bC-Xf-vdC" secondAttribute="leading" id="rgX-wo-fpl"/>
+                        </constraints>
                     </view>
+                    <navigationItem key="navigationItem" title="Mandelbrot" id="T4p-3R-JJy"/>
+                    <connections>
+                        <outlet property="mandelbrotView" destination="DLO-VJ-Oar" id="KgH-1P-h8K"/>
+                        <outlet property="scrollView" destination="goK-Bd-enh" id="Lf7-vn-raA"/>
+                    </connections>
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="dkx-z0-nzr" sceneMemberID="firstResponder"/>
+                <tapGestureRecognizer numberOfTouchesRequired="2" id="07H-Qk-iHQ">
+                    <connections>
+                        <action selector="zoomOutGestureRecognized:" destination="BYZ-38-t0r" id="a27-4D-Tvu"/>
+                    </connections>
+                </tapGestureRecognizer>
+                <tapGestureRecognizer numberOfTapsRequired="2" id="nCG-hq-49q">
+                    <connections>
+                        <action selector="zoomInGestureRecognized:" destination="BYZ-38-t0r" id="xRu-QO-a0d"/>
+                    </connections>
+                </tapGestureRecognizer>
             </objects>
+            <point key="canvasLocation" x="1117" y="387"/>
+        </scene>
+        <!--Navigation Controller-->
+        <scene sceneID="TKn-pg-dOR">
+            <objects>
+                <navigationController automaticallyAdjustsScrollViewInsets="NO" id="sf3-4k-KdA" sceneMemberID="viewController">
+                    <toolbarItems/>
+                    <navigationBar key="navigationBar" contentMode="scaleToFill" id="JzU-sT-lYx">
+                        <rect key="frame" x="0.0" y="0.0" width="320" height="44"/>
+                        <autoresizingMask key="autoresizingMask"/>
+                    </navigationBar>
+                    <nil name="viewControllers"/>
+                    <connections>
+                        <segue destination="BYZ-38-t0r" kind="relationship" relationship="rootViewController" id="dj0-mI-yJn"/>
+                    </connections>
+                </navigationController>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="0ao-Ya-cHh" userLabel="First Responder" sceneMemberID="firstResponder"/>
+            </objects>
+            <point key="canvasLocation" x="305" y="387"/>
         </scene>
     </scenes>
 </document>

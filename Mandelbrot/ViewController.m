@@ -7,8 +7,12 @@
 //
 
 #import "ViewController.h"
+#import "MandelbrotView.h"
 
-@interface ViewController ()
+@interface ViewController () <UIScrollViewDelegate>
+
+@property (weak, nonatomic) IBOutlet UIScrollView *scrollView;
+@property (weak, nonatomic) IBOutlet MandelbrotView *mandelbrotView;
 
 @end
 
@@ -16,12 +20,30 @@
 
 - (void)viewDidLoad {
     [super viewDidLoad];
-    // Do any additional setup after loading the view, typically from a nib.
+
+    self.scrollView.maximumZoomScale = 1 << 19;
 }
 
 - (void)didReceiveMemoryWarning {
     [super didReceiveMemoryWarning];
     // Dispose of any resources that can be recreated.
+}
+
+- (IBAction)zoomOutGestureRecognized:(id)sender {
+
+}
+- (IBAction)zoomInGestureRecognized:(UIGestureRecognizer*)sender {
+    
+}
+
+- (UIView *)viewForZoomingInScrollView:(UIScrollView *)scrollView
+{
+    return self.mandelbrotView;
+}
+
+- (BOOL)scrollViewShouldScrollToTop:(UIScrollView *)scrollView
+{
+    return NO;
 }
 
 @end
