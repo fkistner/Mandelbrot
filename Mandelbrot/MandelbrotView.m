@@ -31,18 +31,26 @@ const CGBitmapInfo kBitmapInfo = kCGBitmapByteOrderDefault | kCGImageAlphaNone;
     self = [super initWithCoder:aDecoder];
     if (self)
     {
-        for (int p = 0, i = 0; i <= UINT8_MAX; i++)
-        {
-            CGFloat c = (double)i/UINT8_MAX;
-            UIColor* color = [UIColor colorWithHue:fmod(c+.65, .95) saturation:.75 brightness:MIN(c*10, .75) alpha:1.];
-            CGFloat comp[3];
-            [color getRed:&(comp[0]) green:&(comp[1]) blue:&(comp[2]) alpha:NULL];
-            
-            colorPalette[p++] = comp[0] * UINT8_MAX;
-            colorPalette[p++] = comp[1] * UINT8_MAX;
-            colorPalette[p++] = comp[2] * UINT8_MAX;
-        }
-        colorSpace = CGColorSpaceCreateIndexed(CGColorSpaceCreateDeviceRGB(), UINT8_MAX, colorPalette);
+        // do not block main queue with palette initialization
+        dispatch_block_t initPalette = dispatch_block_create(DISPATCH_BLOCK_INHERIT_QOS_CLASS, ^{
+            for (int p = 0, i = 0; i <= UINT8_MAX; i++)
+            {
+                CGFloat c = (double)i/UINT8_MAX;
+                UIColor* color = [UIColor colorWithHue:fmod(c+.65, .95) saturation:.75 brightness:MIN(c*10, .75) alpha:1.];
+                CGFloat comp[3];
+                [color getRed:&(comp[0]) green:&(comp[1]) blue:&(comp[2]) alpha:NULL];
+                
+                colorPalette[p++] = comp[0] * UINT8_MAX;
+                colorPalette[p++] = comp[1] * UINT8_MAX;
+                colorPalette[p++] = comp[2] * UINT8_MAX;
+            }
+            colorSpace = CGColorSpaceCreateIndexed(CGColorSpaceCreateDeviceRGB(), UINT8_MAX, colorPalette);
+        });
+        dispatch_async(dispatch_get_global_queue(QOS_CLASS_USER_INITIATED, 0), initPalette);
+        dispatch_block_notify(initPalette, dispatch_get_main_queue(), ^{
+            // make mandelbrot visible, once the palette is generated
+            [self setHidden:NO];
+        });
 
         CATiledLayer* layer = (CATiledLayer*)self.layer;
         layer.levelsOfDetailBias = 19;//log2(CGFLOAT_MAX);// 18; //1 << 10;//layer.levelsOfDetail - 1;
