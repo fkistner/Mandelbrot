@@ -186,7 +186,7 @@ const CGBitmapInfo kBitmapInfo = kCGBitmapByteOrderDefault | kCGImageAlphaNone;
                 double complex z = CMPLX(0, 0);
                 for (itensity = kItensityStart; itensity > 0; itensity--)
                 {
-                    z = csquare(z) + z_0;
+                    z = z*z + z_0;
                     
                     double zAbsSquared = absSquared(z);
                     // continue iterating even when number is definitely not in mandelbrot to be able to smooth intensity gradients
@@ -230,10 +230,6 @@ const CGBitmapInfo kBitmapInfo = kCGBitmapByteOrderDefault | kCGImageAlphaNone;
  * Calculates n^2 for n ∈ Q.
  */
 double square(double n) { return n*n; }
-/**
- * Calculates z^2 for n ∈ C.
- */
-double complex csquare(double complex z) { return z*z; }
 /**
  * Calculates |z|^2 for z ∈ C.
  */
