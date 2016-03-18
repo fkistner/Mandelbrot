@@ -8,8 +8,17 @@
 
 #import <UIKit/UIKit.h>
 
+/**
+ * The levels of detail supported.
+ */
+extern const size_t kMandelbrotViewLevelsOfDetail;
+
 @interface MandelbrotView : UIView
 
-@property (nonatomic) CGFloat hue;
+/**
+ * Sets the base hue for the color palette of the visualization.
+ * @param hue Base hue for palette generation, or NAN for monochrome.
+ */
+@property (nonatomic) CGFloat baseHue;
 
 @end

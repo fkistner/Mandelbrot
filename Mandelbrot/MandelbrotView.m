@@ -20,46 +20,49 @@
     
     volatile OSSpinLock coordLock;
     CGAffineTransform coordTransform;
-    
 }
+
+#pragma mark - Constants
+
+const size_t kMandelbrotViewLevelsOfDetail = 19;
+const size_t kTileSize = 256;
+const size_t kBitsPerComp = sizeof(uint8_t) * 8;
+const size_t kCompPerPixel = 1;
+const CGBitmapInfo kBitmapInfo = kCGBitmapByteOrderDefault | kCGImageAlphaNone;
+
+#pragma mark - Class
 
 + (Class)layerClass
 {
     return [CATiledLayer class];
 }
 
-const size_t kTileSize = 256;
-const size_t kBitsPerComp = sizeof(uint8_t) * 8;
-const size_t kCompPerPixel = 1;
-const CGBitmapInfo kBitmapInfo = kCGBitmapByteOrderDefault | kCGImageAlphaNone;
+#pragma mark - Lifecycle
 
-- (instancetype)initWithCoder:(NSCoder *)aDecoder
-{
+- (instancetype)initWithCoder:(NSCoder *)aDecoder {
     self = [super initWithCoder:aDecoder];
     if (self)
     {
         colorLock = coordLock = OS_SPINLOCK_INIT;
         colorSpace = nil;
-        self.hue = .65;
+        self.baseHue = .65;
         
         CATiledLayer* layer = (CATiledLayer*)self.layer;
-        layer.levelsOfDetailBias = 19;//log2(CGFLOAT_MAX);// 18; //1 << 10;//layer.levelsOfDetail - 1;
+        layer.levelsOfDetailBias = kMandelbrotViewLevelsOfDetail;
         layer.tileSize = CGSizeMake(kTileSize, kTileSize);
     }
     return self;
 }
 
-- (void)layoutSubviews {
-    [super layoutSubviews];
-    
-    CGAffineTransform coord = [self calculateCoordTransform];;
-    OSSpinLockLock(&coordLock);
-    coordTransform = coord;
-    OSSpinLockUnlock(&coordLock);
+- (void)dealloc {
+    if (colorSpace != nil) CGColorSpaceRelease(colorSpace);
 }
 
-- (void)setHue:(CGFloat)hue {
-    _hue = hue;
+#pragma mark - Custom Accessors
+
+- (void)setBaseHue:(CGFloat)hue {
+    _baseHue = hue;
+    // hide view until new palette is available
     [self setHidden:YES];
     
     // do not block main queue with palette initialization
@@ -69,7 +72,7 @@ const CGBitmapInfo kBitmapInfo = kCGBitmapByteOrderDefault | kCGImageAlphaNone;
         if (isnan(hue)) {
             newColorSpace = CGColorSpaceCreateDeviceGray();
         } else {
-        
+            
             for (int p = 0, i = 0; i <= UINT8_MAX; i++)
             {
                 CGFloat c = 1. - (double)i/UINT8_MAX;
@@ -85,6 +88,7 @@ const CGBitmapInfo kBitmapInfo = kCGBitmapByteOrderDefault | kCGImageAlphaNone;
             newColorSpace = CGColorSpaceCreateIndexed(CGColorSpaceCreateDeviceRGB(), UINT8_MAX, colorPalette);
         }
         
+        // safely switch color space -> drawRect might still be in the process of retaining the color space
         OSSpinLockLock(&colorLock);
         if (colorSpace != nil) CGColorSpaceRelease(colorSpace);
         colorSpace = newColorSpace;
@@ -98,14 +102,28 @@ const CGBitmapInfo kBitmapInfo = kCGBitmapByteOrderDefault | kCGImageAlphaNone;
     });
 }
 
-- (void)dealloc
-{
-    CGColorSpaceRelease(colorSpace);
+#pragma mark - Public
+
+- (void)layoutSubviews {
+    [super layoutSubviews];
+    
+    CGAffineTransform coord = [self calculateCoordTransform];
+    OSSpinLockLock(&coordLock);
+    coordTransform = coord;
+    OSSpinLockUnlock(&coordLock);
 }
 
+- (void)drawRect:(CGRect)rect {
+    CGContextRef context = UIGraphicsGetCurrentContext();
+    [self drawMandelbrot:context forRect:rect];
+}
 
-- (CGAffineTransform)calculateCoordTransform
-{
+#pragma mark - Private
+
+/**
+ * Precomputes the required affine transformation matrix to map points with the bounds of the view to coordinates of the visualization.
+ */
+- (CGAffineTransform)calculateCoordTransform {
     CGRect coordRect;
     coordRect.size = CGSizeMake(3., 2.5);
     
@@ -128,34 +146,20 @@ const CGBitmapInfo kBitmapInfo = kCGBitmapByteOrderDefault | kCGImageAlphaNone;
     return CGAffineTransformScale(CGAffineTransformMakeTranslation(coordRect.origin.x, coordRect.origin.y), scale, scale);
 }
 
-- (void)drawRect:(CGRect)rect
-{
-    CGContextRef context = UIGraphicsGetCurrentContext();
-    [self drawMandelbrot:context forRect:rect];
-}
-
-double square(double n) { return n*n; }
-double complex csquare(double complex n) { return n*n; }
-
-bool IsDefinitelyInMandelbrotSet(double complex z)
-{
-    double xMinusQuarter = creal(z) - .25;
-    double ySquared = square(cimag(z));
-    double q = square(xMinusQuarter) + ySquared;
-    double xPlusOne = creal(z) + 1;
-    
-    return (q * (q + xMinusQuarter) < .25 * ySquared) // Cardioid
-        || (square(xPlusOne) + ySquared < .0625);     // Period-1 bulb
-}
-
-- (void)drawMandelbrot:(CGContextRef)context forRect:(CGRect)rect
-{
+/**
+ * Draws the mandelbrot visualization for the given rect into the given context.
+ * @param rect The rect inside the bounds of the MandelbrotView to draw
+ */
+- (void)drawMandelbrot:(CGContextRef)context forRect:(CGRect)rect {
+    // safely get transform for current view size -> view might currently be changing size
     OSSpinLockLock(&coordLock);
     CGAffineTransform coord = coordTransform;
     OSSpinLockUnlock(&coordLock);
     
+    // combine transforms to create final device pixels to coordinate transform
     CGAffineTransform transform = CGAffineTransformConcat(CGAffineTransformInvert(CGContextGetCTM(context)), coord);
     
+    // calculate size of pixel buffer
     CGRect targetRect = CGContextConvertRectToDeviceSpace(context, rect);
     size_t width  = targetRect.size.width;
     size_t height = targetRect.size.height;
@@ -168,52 +172,84 @@ bool IsDefinitelyInMandelbrotSet(double complex z)
     {
         for (int x = 0; x < width; x++)
         {
-            CGPoint userPoint = CGPointApplyAffineTransform(CGPointMake(x, y), transform);
-            double complex z_0 = CMPLX(userPoint.x, userPoint.y);
+            // map device pixel to coordinates / complex number
+            CGPoint coordPoint = CGPointApplyAffineTransform(CGPointMake(x, y), transform);
+            double complex z_0 = CMPLX(coordPoint.x, coordPoint.y);
             
-            const int kItStart = UINT8_MAX;
-            uint8_t it = 0;
+            const int kItensityStart = UINT8_MAX;
+            uint8_t itensity = 0;
             
-            // Only do escape analysis, when not definitely in set
+            // only do escape analysis, when not definitely in set
             if (!IsDefinitelyInMandelbrotSet(z_0))
             {
                 // escape time algorithm
                 double complex z = CMPLX(0, 0);
-                for (it = kItStart; it > 0; it--)
+                for (itensity = kItensityStart; itensity > 0; itensity--)
                 {
                     z = csquare(z) + z_0;
                     
-                    double zAbsSquared = square(creal(z)) + square(cimag(z));
+                    double zAbsSquared = absSquared(z);
+                    // continue iterating even when number is definitely not in mandelbrot to be able to smooth intensity gradients
                     if (zAbsSquared > 1<<16)
                     {
-                        // Smoothing
+                        // smoothing
                         double nu = log2(log2(zAbsSquared) / 2);
-                        it = round(it - 1 + nu);
+                        itensity = round(itensity - 1 + nu);
                         break;
                     }
                 }
             }
 
-            data[p++] = it;
+            // write intensity as an integer in the 0...255 interval
+            data[p++] = itensity;
         }
     }
     
     
-    // draw stack buffer to layer
-    
+    // safely retain color space -> other thread might try to switch color space
     OSSpinLockLock(&colorLock);
     CGColorSpaceRef cs = colorSpace;
     CGColorSpaceRetain(cs);
     OSSpinLockUnlock(&colorLock);
     
+    // create image with data of stack buffer
     CGDataProviderRef dataProvider = CGDataProviderCreateWithData(NULL, data, sizeof(data), NULL);
     CGImageRef image = CGImageCreate(width, height, kBitsPerComp, kBitsPerComp*kCompPerPixel, bytesPerRow, cs, kBitmapInfo, dataProvider, NULL, YES, kCGRenderingIntentDefault);
     
+    // draw stack buffer to layer
     CGContextDrawImage(context, rect, image);
     
     CGImageRelease(image);
     CGDataProviderRelease(dataProvider);
     CGColorSpaceRelease(cs);
+}
+
+#pragma mark - Helper functions
+
+/**
+ * Calculates n^2 for n ∈ Q.
+ */
+double square(double n) { return n*n; }
+/**
+ * Calculates z^2 for n ∈ C.
+ */
+double complex csquare(double complex z) { return z*z; }
+/**
+ * Calculates |z|^2 for z ∈ C.
+ */
+double absSquared(double complex z) { return square(creal(z)) + square(cimag(z)); }
+
+/**
+ * Checks whether z ∈ C is in the Cardioid or period-1 bulb of the mandelbrot set.
+ */
+bool IsDefinitelyInMandelbrotSet(double complex z) {
+    double xMinusQuarter = creal(z) - .25;
+    double ySquared = square(cimag(z));
+    double q = square(xMinusQuarter) + ySquared;
+    double xPlusOne = creal(z) + 1;
+    
+    return (q * (q + xMinusQuarter) < .25 * ySquared) // Cardioid
+        || (square(xPlusOne) + ySquared < .0625);     // Period-1 bulb
 }
 
 @end

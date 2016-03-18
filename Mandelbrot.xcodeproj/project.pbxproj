@@ -88,13 +88,13 @@
 				17FEE6D81C98A56A00EA62A8 /* AppDelegate.m */,
 				17FEE6DA1C98A56A00EA62A8 /* ViewController.h */,
 				17FEE6DB1C98A56A00EA62A8 /* ViewController.m */,
-				17FEE6DD1C98A56A00EA62A8 /* Main.storyboard */,
-				17FEE6E01C98A56A00EA62A8 /* Assets.xcassets */,
-				17FEE6E21C98A56A00EA62A8 /* LaunchScreen.storyboard */,
-				17FEE6E51C98A56A00EA62A8 /* Info.plist */,
-				17FEE6D41C98A56900EA62A8 /* Supporting Files */,
 				17FEE6F91C98B55500EA62A8 /* MandelbrotView.h */,
 				17FEE6FA1C98B55500EA62A8 /* MandelbrotView.m */,
+				17FEE6DD1C98A56A00EA62A8 /* Main.storyboard */,
+				17FEE6E21C98A56A00EA62A8 /* LaunchScreen.storyboard */,
+				17FEE6E01C98A56A00EA62A8 /* Assets.xcassets */,
+				17FEE6E51C98A56A00EA62A8 /* Info.plist */,
+				17FEE6D41C98A56900EA62A8 /* Supporting Files */,
 			);
 			path = Mandelbrot;
 			sourceTree = "<group>";

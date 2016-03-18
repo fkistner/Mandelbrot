@@ -19,17 +19,28 @@
 
 @implementation ViewController
 
-- (void)viewDidLoad {
-    [super viewDidLoad];
-
-    self.scrollView.maximumZoomScale = 1 << 19;
-    self.hueSlider.value = self.mandelbrotView.hue;
-}
+#pragma mark - UIViewController
 
 - (void)didReceiveMemoryWarning {
     [super didReceiveMemoryWarning];
     // Dispose of any resources that can be recreated.
 }
+
+- (void)viewDidLoad {
+    [super viewDidLoad];
+
+    self.scrollView.maximumZoomScale = 1 << kMandelbrotViewLevelsOfDetail;
+    self.hueSlider.value = self.mandelbrotView.baseHue;
+}
+
+- (void)viewWillTransitionToSize:(CGSize)size withTransitionCoordinator:(id<UIViewControllerTransitionCoordinator>)coordinator {
+    // redraw mandelbrot after rotation / view resize
+    [coordinator animateAlongsideTransition:nil completion:^(id<UIViewControllerTransitionCoordinatorContext> context) {
+        [self.mandelbrotView setNeedsDisplay];
+    }];
+}
+
+#pragma mark - IBActions
 
 - (IBAction)zoomOutGestureRecognized:(UIGestureRecognizer*)sender {
     CGFloat newZoomScale = exp2(ceil(log2(self.scrollView.zoomScale) - 1.));
@@ -37,7 +48,7 @@
 }
 
 - (IBAction)zoomInGestureRecognized:(UIGestureRecognizer*)sender {
-    CGFloat newZoomScale = exp2(floor(log2(self.scrollView.zoomScale) + 1.)); // / self.scrollView.zoomScale
+    CGFloat newZoomScale = exp2(floor(log2(self.scrollView.zoomScale) + 1.));
     
     CGPoint newCenter = [sender locationInView:self.mandelbrotView];
     CGRect rect;
@@ -51,37 +62,30 @@
 }
 
 - (IBAction)toggleHue:(UIBarButtonItem *)sender {
-    if (isnan(self.mandelbrotView.hue))
+    if (isnan(self.mandelbrotView.baseHue))
     {
         sender.title = @"Hue";
         self.hueSlider.enabled = YES;
-        self.mandelbrotView.hue = self.hueSlider.value;
+        self.mandelbrotView.baseHue = self.hueSlider.value;
     } else {
         sender.title = @"Gray";
         self.hueSlider.enabled = NO;
-        self.mandelbrotView.hue = NAN;
+        self.mandelbrotView.baseHue = NAN;
     }
 }
 
 - (IBAction)hueChanged:(UISlider *)sender {
-    self.mandelbrotView.hue = sender.value;
+    self.mandelbrotView.baseHue = sender.value;
 }
 
-- (UIView *)viewForZoomingInScrollView:(UIScrollView *)scrollView
-{
+#pragma mark - UIScrollViewDelegate
+
+- (UIView *)viewForZoomingInScrollView:(UIScrollView *)scrollView {
     return self.mandelbrotView;
 }
 
-- (BOOL)scrollViewShouldScrollToTop:(UIScrollView *)scrollView
-{
+- (BOOL)scrollViewShouldScrollToTop:(UIScrollView *)scrollView {
     return NO;
-}
-
-- (void)viewWillTransitionToSize:(CGSize)size withTransitionCoordinator:(id<UIViewControllerTransitionCoordinator>)coordinator
-{
-    [coordinator animateAlongsideTransition:nil completion:^(id<UIViewControllerTransitionCoordinatorContext> context) {
-        [self.mandelbrotView setNeedsDisplay];
-    }];
 }
 
 @end
